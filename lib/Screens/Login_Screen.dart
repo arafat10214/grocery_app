@@ -114,14 +114,28 @@ class _LoginScreenState extends State<LoginScreen> {
                       height: 60,
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => SelectLocation(),
-                            ),
+                        onPressed: () async{
+                          if(login.loginFormKey.currentState!.validate()){
+                            await login.loginUser();
+                            // login.isLoginSuccess =true;
+                          if(login.isLoginSuccess =true){
+                          ////////// ----------Snackbar --------------------//////////
+                          ScaffoldMessenger.of(context).showSnackBar(
+                           SnackBar(content: Text("Login successful")),
                           );
-                        },
+                          Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => SelectLocation()));
+                          }else{
+                             ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        "Invalid email or password",
+                                      ),
+                                    ),
+                                  );
+                            }
+
+                          }
+                        }, 
                         child: Text(
                           'Log In',
                           style: TextStyle(
@@ -137,7 +151,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
                       ),
-                    ),
+                      ),
                     SizedBox(height: 30),
                     SizedBox(
                       height: 60,
@@ -198,13 +212,12 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ],
                     ),
-                  ],
-                ),
+              ])
               );
             },
-          ),
-        ),
-      ),
+        )
+        )
+      )
     );
-  }
+}
 }

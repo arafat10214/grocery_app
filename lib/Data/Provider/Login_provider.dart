@@ -7,41 +7,34 @@ import 'package:groceries_app/Data/Model/User_model.dart';
 import 'package:logger/logger.dart';
 
 class LoginProvider extends ChangeNotifier {
-  final Logger logger = Logger();
+  Logger logger = Logger();
 
-  //----------------- UI state -----------------
+
+
+  //----------------- Password visibility off on -----------
   bool isPasswordHide = true;
-  bool inProgressIndicator = false;
-  bool isLoginSuccess = false;
 
   //---------------------- formKey --------------
-  final GlobalKey<FormState> loginFormKey = GlobalKey<FormState>();
+  final loginFormKey = GlobalKey<FormState>();
 
-  //------------------ Controllers ------------
-  final TextEditingController emailController = TextEditingController();
+  //------------------ Login Controller ------------
   final TextEditingController passwordController = TextEditingController();
+  final TextEditingController emailController = TextEditingController();
 
-  //============================ Login Method =======================
-  Future<bool> login() async {
-    if (loginFormKey.currentState!.validate()) {
-      return await loginUser();
-    } else {
-      logger.w("Form validation failed!");
-      return false;
-    }
-  }
+  bool inProgressIndicator = false;
+
+  bool isLoginSuccess = false;
 
   //============================ Login User ==========================
-  Future<bool> loginUser() async {
+  Future loginUser() async {
     inProgressIndicator = true;
+    isLoginSuccess = true;
     notifyListeners();
 
     Map<String, dynamic> requestBody = {
-      "email": emailController.text.trim(),
-      "password": passwordController.text.trim(),
+      "email":emailController.text.trim(),
+      "password":passwordController.text.trim(),
     };
-
-    logger.i("Sending Login Request: $requestBody");
 
     ApiResponse response = await ApiServices.postData(
       Urls.loginUrl,
@@ -50,40 +43,26 @@ class LoginProvider extends ChangeNotifier {
 
     inProgressIndicator = false;
     notifyListeners();
-    //================= Response Success ==================
-    if (response.isSuccess && (response.statusCode == 200 || response.statusCode == 201)) {
-      try {
-        final token = response.responseBody["data"]["token"];
-        final userJson = response.responseBody["data"]["user"];
-        if (token == null || userJson == null) {
-          logger.e("Invalid API Response Format");
-          return false;
-        }
 
-        UserModel model = UserModel.fromJson(userJson);
+    if (response.isSuccess && (response.statusCode == 201 || response.statusCode == 200)) {
 
-        //----------- Local Storage e Save ----------
-        await AuthStorage.saveUserData(token, model);
-        logger.i("Login Successful!");
-        logger.i("Token: $token");
-        logger.i("User: ${model.toJson()}");
+      final token = response.responseBody["data"]["token"];
+      //--------- user model e data save -------
+      UserModel model = UserModel.fromJson(
+        response.responseBody["data"],
+      );
 
-        //------------- Success Flag --------------
-        isLoginSuccess = true;
-        notifyListeners();
-
-        clearField();
-        return true;
-      } catch (e) {
-        logger.e("Error parsing response: $e");
-        return false;
-      }
-    }
-
-    //================= Response Failed ==================
-    else {
-      logger.w(" Login Failed. Message: ${response.message}");
-      isLoginSuccess = false;
+      //----------- Get storage e data save --------------
+      await AuthStorage.saveUserData(token, model);
+      AuthStorage.isLogin();
+      isLoginSuccess = true;
+      notifyListeners();
+      //------------ Clear all field -----------
+      clearField();
+      return true;
+    } else {
+      logger.i(response.message);
+      isLoginSuccess =false;
       notifyListeners();
       return false;
     }
@@ -94,14 +73,14 @@ class LoginProvider extends ChangeNotifier {
     isPasswordHide = !isPasswordHide;
     notifyListeners();
   }
-
-  //==================== Clear all field ===========================
-  void clearField() {
+  //==================== clear all field ===========================
+  void clearField(){
     emailController.clear();
     passwordController.clear();
   }
 
-  //==================== Dispose all field ==========================
+
+  //==================== Dispose all field ===========================
   @override
   void dispose() {
     emailController.dispose();

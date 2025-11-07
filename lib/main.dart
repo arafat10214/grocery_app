@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:groceries_app/Data/Provider/Login_provider.dart';
-import 'package:groceries_app/Screens/Signup_Screen.dart';
+
 import 'package:groceries_app/Screens/Splash_Screen.dart';
 import 'package:provider/provider.dart';
 import 'Data/Provider/Signup_Provider.dart';
